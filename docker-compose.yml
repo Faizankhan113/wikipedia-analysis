@@ -1,0 +1,61 @@
+services:
+  kafka:
+    image: apache/kafka:4.1.1
+    container_name: kafka
+    user: root
+
+    ports:
+      - "9092:9092"
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+
+      KAFKA_HEAP_OPTS : "-Xmx512m -Xms512m"
+
+    volumes:
+      - ./runtime/kafka_data:/tmp/kraft-combined-logs
+
+
+  spark:
+    build: ./spark
+    image: coustom-spark:3.5.0
+    container_name: spark
+    depends_on:
+      - kafka
+
+    volumes:
+      - ./jobs:/jobs                         # this means the name of folder is 'jobs' in my windows and 'jobs' inside the docker
+      - ./runtime/conf:/opt/spark/conf
+      - ./runtime/logs:/opt/spark/logs
+
+    ports:
+      - "4040:4040"
+      - "8080:8080"
+      
+    command: bash -c "/opt/spark/bin/spark-submit --master local[*] /jobs/spark-streaming.py && sleep infinity"
+
+
+  producer:
+    build: ./producer
+    image: coustom-producer:1.0
+    container_name: producer
+
+    depends_on:
+      - kafka
+
+    volumes:
+      - ./producer:/app
+
+    command: bash -c "python python_wikipedia.py && sleep infinity" 
