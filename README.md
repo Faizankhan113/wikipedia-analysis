@@ -55,16 +55,28 @@ Wikipedia Stream → Kafka (Producer) → Spark Streaming → Output
 
 ```
 git clone https://github.com/Faizankhan113/wikipedia-analysis.git
+```
+```
 cd wikipedia-analysis
 ```
 
 ---
 
-### 2. Start services
+### 2. Start services 
 
+#### First Time
 ```
-docker-compose up --build
+docker compose up --build
 ```
+#### Repeating runs
+```
+docker compose up -d
+```
+
+> **Note:** use below command to stop the running program.
+> ```
+> docker compose down
+> ```
 
 ---
 
